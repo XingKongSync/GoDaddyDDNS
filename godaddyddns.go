@@ -10,15 +10,21 @@ import (
 	"strings"
 )
 
-var (
-	HOST    string
-	DOMAIN  string
-	SECRET  string
-	KEY     string
-	API_URL = "https://api.godaddy.com/v1/domains/%s/records/%s/%s"
-)
+const TYPE_V4 = "A"
+const TYPE_V6 = "AAAA"
+const CHECK_URL_V4 = "http://api.ipify.org"
+const CHECK_URL_V6 = "http://api6.ipify.org"
 
-const TYPE = "A"
+var (
+	HOST      string
+	DOMAIN    string
+	SECRET    string
+	KEY       string
+	VERSION   string
+	API_URL   = "https://api.godaddy.com/v1/domains/%s/records/%s/%s"
+	TYPE      = TYPE_V4
+	CHECK_URL = CHECK_URL_V4
+)
 
 type DNSRecord struct {
 	Data string `json:"data"`
@@ -38,6 +44,7 @@ func initFlags() {
 	flag.StringVar(&DOMAIN, "domain", "", "your domain")
 	flag.StringVar(&SECRET, "secret", "", "your api secret")
 	flag.StringVar(&KEY, "key", "", "your api key")
+	flag.StringVar(&VERSION, "version", "ipv4", "ipv4 or ipv6")
 
 	flag.Parse()
 
@@ -45,6 +52,11 @@ func initFlags() {
 	// fmt.Printf("Domain: %s\n", DOMAIN)
 	// fmt.Printf("Key: %s\n", KEY)
 	// fmt.Printf("Secret: %s\n", SECRET)
+
+	if VERSION == "ipv6" {
+		TYPE = TYPE_V6
+		CHECK_URL = CHECK_URL_V6
+	}
 
 	API_URL = fmt.Sprintf(API_URL, DOMAIN, TYPE, HOST)
 
@@ -84,7 +96,6 @@ func getDNS() string {
 }
 
 func getIP() string {
-	const CHECK_URL = "http://api.ipify.org"
 
 	resp, err := http.Get(CHECK_URL)
 	handleErr(err)
